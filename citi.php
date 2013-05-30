@@ -35,8 +35,11 @@ include 'apikey.php';
 //                )    
 
 
-    $CARTODB_URL = "http://$CARTODB_URL_PREFIX.cartodb.com/api/v2/sql";
+    $CARTODB_URL = "http://$CARTODB_URL_PREFIX.cartodb.com/api/v2/sql/";
 
+    $data = null;
+
+    $big_sql = '';
     foreach ($parsed_json->stationBeanList as $station) {
         $sql = sprintf("INSERT INTO citibike_times  " .
         "(the_geom, fetch_time, station_id, station_name, docks_total, docks_avail, bikes_avail, address1, address2, lat, lon, station_status, station_status_key, city, postal_code) values ".
@@ -59,13 +62,31 @@ include 'apikey.php';
         $station->postalCode
 );
 
+
+        $big_sql .= urlencode($sql).';';
+#        $big_sql .= "$sql";
+        
+    }
+
         #$sql_url = $CARTODB_URL . "?api_key=$CARTODB_API_KEY&q=" . urlencode($sql);
-        $sql_url = $CARTODB_URL . "?api_key=$CARTODB_API_KEY&q=".urlencode($sql);
-        $result = file_get_contents($sql_url);
+#        $sql_url = $CARTODB_URL . "?api_key=$CARTODB_API_KEY&q=$big_sql";
+#        $result = file_get_contents($sql_url);
+
+#        $big_sql = urlencode($big_sql);
+
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL, $CARTODB_URL);
+        curl_setopt($ch,CURLOPT_POST, true);
+        curl_setopt($ch,CURLOPT_POSTFIELDS, "api_key=$CARTODB_API_KEY&q=$big_sql");
+        
+        $result = curl_exec($ch);
+        curl_close($ch);
+
         print "$result\n";
+
+#        print "SQL:\n$big_sql\n";
 //        print "$sql\n";
 
-    }
 
 
 ?>
